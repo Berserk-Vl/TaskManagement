@@ -24,34 +24,27 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public Map<String, Object> addTask(Map<String, String> fields) {
+        String error;
         try {
             Task task = new Task();
-            if (fields.containsKey("author") && userService.findUserByEmail(fields.get("author")) != null) {
-                task.setAuthor(fields.get("author"));
-            }
-            if (fields.containsKey("title")) {
-                task.setTitle(fields.get("title"));
-            }
-            if (fields.containsKey("description")) {
-                task.setDescription(fields.get("description"));
-            }
-            if (fields.containsKey("status")) {
-                System.out.println(Task.Status.valueOf(fields.get("status").toUpperCase()));
-                task.setStatus(Task.Status.valueOf(fields.get("status").toUpperCase()));
-            }
-            if (fields.containsKey("priority")) {
-                task.setPriority(Task.Priority.valueOf(fields.get("priority").toUpperCase()));
-            }
-            if (fields.containsKey("performer") && userService.findUserByEmail(fields.get("performer")) != null) {
-                task.setPerformer(fields.get("performer"));
-            }
+            setTextField(task, fields, "author", MAX_EMAIL_LENGTH, false, true);
+            setTextField(task, fields, "title", MAX_TITLE_LENGTH, false, true);
+            setTextField(task, fields, "description", MAX_DESCRIPTION_LENGTH, false, true);
+            setEnumField(task, fields, "status", Task.Status.values(), false, false);
+            setEnumField(task, fields, "priority", Task.Priority.values(), false, false);
+            setTextField(task, fields, "performer", MAX_EMAIL_LENGTH, true, false);
             return Map.of("task", taskRepository.save(task));
         } catch (Exception e) {
-            return Map.of("error", "Bad value / Missing value");
+            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
+                error = e.getMessage();
+            } else {
+                error = e.getClass().toString();
+            }
         }
+        return Map.of("message", error);
     }
 
-    private Task getTask(Long taskId) throws NoSuchElementException{
+    private Task getTask(Long taskId) throws NoSuchElementException {
         if (taskRepository.findById(taskId).isPresent()) {
             return taskRepository.findById(taskId).get();
         }
