@@ -3,10 +3,7 @@ package ru.sb.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.sb.config.security.JwtService;
 import ru.sb.service.TaskService;
 
@@ -29,6 +26,19 @@ public class TaskController {
         Map<String, Object> result = taskService.addTask(body);
         if (result.containsKey("task")) {
             return new ResponseEntity<>(result, HttpStatus.CREATED);
+        } else {
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PutMapping("/tasks/{taskId}")
+    public ResponseEntity<Map<String, Object>> updateTask(@PathVariable(name = "taskId") Long taskId,
+                                                          @RequestHeader Map<String, String> head,
+                                                          @RequestBody Map<String, String> body) {
+        body.put("author", jwtService.getSubject(head.get("authorization").substring("Bearer ".length())));
+        Map<String, Object> result = taskService.updateTask(taskId, body);
+        if (result.containsKey("task")) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
         } else {
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
         }
