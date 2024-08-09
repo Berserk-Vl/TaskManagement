@@ -11,9 +11,9 @@ public class Task {
     private String title;
     private String description;
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private Status status = Status.PENDING;
     @Enumerated(EnumType.STRING)
-    private Priority priority;
+    private Priority priority = Priority.LOW;
     private String author;
     private String performer;
 
@@ -87,13 +87,13 @@ public class Task {
         this.performer = performer;
     }
 
-    enum Status {
+   public enum Status {
         PENDING,
         IN_PROCESS,
         DONE
     }
 
-    enum Priority {
+    public enum Priority {
         LOW,
         MEDIUM,
         HIGH
