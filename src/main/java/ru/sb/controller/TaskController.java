@@ -1,7 +1,5 @@
 package ru.sb.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,8 +28,6 @@ public class TaskController {
         body.put("author", jwtService.getSubject(head.get("authorization").substring("Bearer ".length())));
         Map<String, Object> result = taskService.addTask(body);
         if (result.containsKey("task")) {
-            result.put("task", new ObjectMapper().convertValue(result.get("task"), new TypeReference<Map<String, Object>>() {
-            }));
             return new ResponseEntity<>(result, HttpStatus.CREATED);
         } else {
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
