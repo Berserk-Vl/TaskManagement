@@ -137,4 +137,50 @@ public class TaskServiceImpl implements TaskService {
             throw new NoSuchElementException(String.format("ERROR: Field(%s) not found.", fieldName));
         }
     }
+
+    private String getStringFilterValue(Map<String, String> filters, String filterName)
+            throws IllegalArgumentException {
+        if (filters.containsKey(filterName)) {
+            if (filters.get(filterName).equals("ME")) {
+                if (filters.containsKey("requester") && filters.get("requester") != null) {
+                    return filters.get("requester");
+                } else {
+                    throw new IllegalArgumentException(
+                            String.format("ERROR: Can't identify the filter(%s) value.", filterName));
+                }
+            } else {
+                return filters.get(filterName);
+            }
+        }
+        return "";
+    }
+
+    private Long getLongFilterValue(Map<String, String> filters, String filterName)
+            throws NumberFormatException, IllegalArgumentException {
+        if (filters.containsKey(filterName)) {
+            try {
+                long value = Long.parseLong(filters.get(filterName));
+                if (value < 0) {
+                    throw new IllegalArgumentException(String.format("ERROR: Filter(%s) can't have a negative value.", filterName));
+                }
+                return value;
+            } catch (NumberFormatException e) {
+                throw new NumberFormatException(String.format("ERROR: Filter(%s) is not Long type.", filterName));
+            }
+        }
+        return 0L;
+    }
+
+    private Boolean getBooleanFilterValue(Map<String, String> filters, String filterName)
+            throws IllegalArgumentException {
+        if (filters.containsKey(filterName)) {
+            if (filters.get(filterName).equalsIgnoreCase("true")) {
+                return true;
+            } else if (filters.get(filterName).equalsIgnoreCase("false")) {
+                return false;
+            }
+            throw new IllegalArgumentException(String.format("ERROR: Filter(%s) is not Boolean type.", filterName));
+        }
+        return false;
+    }
 }
