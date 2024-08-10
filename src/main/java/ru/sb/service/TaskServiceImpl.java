@@ -80,14 +80,14 @@ public class TaskServiceImpl implements TaskService {
             long offset = getLongFilterValue(filters, "offset");
             long limit = getLongFilterValue(filters, "limit");
             if (offset > 0 && limit == 0) {
-                throw new IllegalArgumentException("ERROR: For an offset value > 0 need to provide a limit value > 0.");
+                throw new IllegalArgumentException("ERROR[400]: For an offset value > 0 need to provide a limit value > 0.");
             }
             boolean comments = getBooleanFilterValue(filters, "comments");
             Stream<Task> taskStream = taskRepository.findAll().stream();
             if (author != null && !author.equals("")) {
                 taskStream = taskStream.filter(task -> task.getAuthor().equals(author));
             } else if (author == null) {
-                throw new IllegalArgumentException("ERROR: Filter(author) can't be null.");
+                throw new IllegalArgumentException("ERROR[400]: Filter(author) can't be null.");
             }
             if (!"".equals(performer)) {
                 taskStream = taskStream.filter(task -> {
@@ -102,7 +102,7 @@ public class TaskServiceImpl implements TaskService {
             taskStream = taskList.stream();
             if (offset * limit >= totalFilteredTask) {
                 throw new IllegalArgumentException(
-                        String.format("ERROR: You wanted to skip %d, but after filtering there were only %d items left.",
+                        String.format("ERROR[400]: You wanted to skip %d, but after filtering there were only %d items left.",
                                 offset * limit, totalFilteredTask));
             }
             if (limit != 0) {
@@ -151,10 +151,10 @@ public class TaskServiceImpl implements TaskService {
                     setEnumField(task, fields, "status", Task.Status.values(), false, true);
                     return Map.of("task", taskRepository.save(task));
                 } else {
-                    error = String.format("ERROR: You are not an author or a performer of the task(%d).", taskId);
+                    error = String.format("ERROR[403]: You are not an author or a performer of the task(%d).", taskId);
                 }
             } else {
-                error = "ERROR: Can't identify requester.";
+                error = "ERROR[403]: Can't identify requester.";
             }
         } catch (Exception e) {
             if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
@@ -192,7 +192,7 @@ public class TaskServiceImpl implements TaskService {
                 getTask(taskId);
                 return commentService.addComment(taskId, fields.get("author"), fields.get("text"));
             } else {
-                error = "ERROR: Field(text) not found.";
+                error = "ERROR[400]: Field(text) not found.";
             }
         } catch (Exception e) {
             if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
@@ -208,12 +208,12 @@ public class TaskServiceImpl implements TaskService {
         if (taskRepository.findById(taskId).isPresent()) {
             return taskRepository.findById(taskId).get();
         }
-        throw new NoSuchElementException(String.format("ERROR: A task(%d) not exists.", taskId));
+        throw new NoSuchElementException(String.format("ERROR[404]: A task(%d) not exists.", taskId));
     }
 
     private void isAuthor(Task task, Map<String, String> fields) throws IllegalArgumentException {
         if (!(fields.containsKey("author") && task.getAuthor().equals(fields.get("author")))) {
-            throw new IllegalArgumentException(String.format("ERROR: You are not an author of the task(%d).", task.getId()));
+            throw new IllegalArgumentException(String.format("ERROR[403]: You are not an author of the task(%d).", task.getId()));
         }
     }
 
@@ -232,13 +232,13 @@ public class TaskServiceImpl implements TaskService {
                                 task.setPerformer(fields.get(fieldName));
                             } else {
                                 throw new IllegalArgumentException(
-                                        String.format("ERROR: Field(%s) can't be set, because user with specified email(%s) not exists.",
+                                        String.format("ERROR[400]: Field(%s) can't be set, because user with specified email(%s) not exists.",
                                                 fieldName, fields.get(fieldName)));
                             }
                         }
                     }
                 } else {
-                    throw new IllegalArgumentException(String.format("ERROR: Field(%s) exceeds max length(%d > %d).",
+                    throw new IllegalArgumentException(String.format("ERROR[400]: Field(%s) exceeds max length(%d > %d).",
                             fieldName, fields.get(fieldName).length(), maxLength));
                 }
             } else if (nullable) {
@@ -246,10 +246,10 @@ public class TaskServiceImpl implements TaskService {
                     case "performer" -> task.setPerformer(fields.get(fieldName));
                 }
             } else {
-                throw new NullPointerException(String.format("ERROR: Field(%s) can not be null.", fieldName));
+                throw new NullPointerException(String.format("ERROR[400]: Field(%s) can not be null.", fieldName));
             }
         } else if (required) {
-            throw new NoSuchElementException(String.format("ERROR: Field(%s) not found.", fieldName));
+            throw new NoSuchElementException(String.format("ERROR[400]: Field(%s) not found.", fieldName));
         }
     }
 
@@ -264,15 +264,15 @@ public class TaskServiceImpl implements TaskService {
                         case "priority" -> task.setPriority(Task.Priority.valueOf(fields.get(fieldName).toUpperCase()));
                     }
                 } catch (IllegalArgumentException e) {
-                    throw new IllegalArgumentException(String.format("ERROR: Invalid value for %s, valid values are %s.",
+                    throw new IllegalArgumentException(String.format("ERROR[400]: Invalid value for %s, valid values are %s.",
                             fieldName, Arrays.toString(validValues)));
                 }
             } else if (!nullable) {
-                throw new NullPointerException(String.format("ERROR: Field(%s) can not be null.", fieldName));
+                throw new NullPointerException(String.format("ERROR[400]: Field(%s) can not be null.", fieldName));
             }
 
         } else if (required) {
-            throw new NoSuchElementException(String.format("ERROR: Field(%s) not found.", fieldName));
+            throw new NoSuchElementException(String.format("ERROR[400]: Field(%s) not found.", fieldName));
         }
     }
 
@@ -284,7 +284,7 @@ public class TaskServiceImpl implements TaskService {
                     return filters.get("requester");
                 } else {
                     throw new IllegalArgumentException(
-                            String.format("ERROR: Can't identify the filter(%s) value.", filterName));
+                            String.format("ERROR[400]: Can't identify the filter(%s) value.", filterName));
                 }
             } else {
                 return filters.get(filterName);
@@ -299,11 +299,11 @@ public class TaskServiceImpl implements TaskService {
             try {
                 long value = Long.parseLong(filters.get(filterName));
                 if (value < 0) {
-                    throw new IllegalArgumentException(String.format("ERROR: Filter(%s) can't have a negative value.", filterName));
+                    throw new IllegalArgumentException(String.format("ERROR[400]: Filter(%s) can't have a negative value.", filterName));
                 }
                 return value;
             } catch (NumberFormatException e) {
-                throw new NumberFormatException(String.format("ERROR: Filter(%s) is not Long type.", filterName));
+                throw new NumberFormatException(String.format("ERROR[400]: Filter(%s) is not Long type.", filterName));
             }
         }
         return 0L;
@@ -317,7 +317,7 @@ public class TaskServiceImpl implements TaskService {
             } else if (filters.get(filterName).equalsIgnoreCase("false")) {
                 return false;
             }
-            throw new IllegalArgumentException(String.format("ERROR: Filter(%s) is not Boolean type.", filterName));
+            throw new IllegalArgumentException(String.format("ERROR[400]: Filter(%s) is not Boolean type.", filterName));
         }
         return false;
     }
