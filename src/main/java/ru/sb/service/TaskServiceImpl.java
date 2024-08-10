@@ -5,21 +5,26 @@ import ru.sb.model.Task;
 import ru.sb.model.TaskRepository;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class TaskServiceImpl implements TaskService {
     private TaskRepository taskRepository;
     private UserService userService;
+    private CommentService commentService;
     private static final int MAX_TITLE_LENGTH = 50;
     private static final int MAX_DESCRIPTION_LENGTH = 300;
     private static final int MAX_EMAIL_LENGTH = 30;
 
 
-    public TaskServiceImpl(TaskRepository taskRepository, UserService userService) {
+    public TaskServiceImpl(TaskRepository taskRepository, UserService userService, CommentService commentService) {
         this.taskRepository = taskRepository;
         this.userService = userService;
+        this.commentService = commentService;
     }
 
     @Override
@@ -56,6 +61,57 @@ public class TaskServiceImpl implements TaskService {
             setEnumField(task, fields, "priority", Task.Priority.values(), false, false);
             setTextField(task, fields, "performer", MAX_EMAIL_LENGTH, true, false);
             return Map.of("task", taskRepository.save(task));
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
+                error = e.getMessage();
+            } else {
+                error = e.getClass().toString();
+            }
+        }
+        return Map.of("message", error);
+    }
+
+    @Override
+    public Map<String, Object> getTasks(Map<String, String> filters) {
+        String error;
+        try {
+            String author = getStringFilterValue(filters, "author");
+            String performer = getStringFilterValue(filters, "performer");
+            long offset = getLongFilterValue(filters, "offset");
+            long limit = getLongFilterValue(filters, "limit");
+            if (offset > 0 && limit == 0) {
+                throw new IllegalArgumentException("ERROR: For an offset value > 0 need to provide a limit value > 0.");
+            }
+            boolean comments = getBooleanFilterValue(filters, "comments");
+            Stream<Task> taskStream = taskRepository.findAll().stream();
+            if (author != null && !author.equals("")) {
+                taskStream = taskStream.filter(task -> task.getAuthor().equals(author));
+            } else if (author == null) {
+                throw new IllegalArgumentException("ERROR: Filter(author) can't be null.");
+            }
+            if (!"".equals(performer)) {
+                taskStream = taskStream.filter(task -> {
+                    if (task.getPerformer() == null) {
+                        return task.getPerformer() == null && performer == null;
+                    }
+                    return task.getPerformer().equals(performer);
+                });
+            }
+            List<Task> taskList = taskStream.toList();
+            long totalFilteredTask = taskList.size();
+            taskStream = taskList.stream();
+            if (offset * limit >= totalFilteredTask) {
+                throw new IllegalArgumentException(
+                        String.format("ERROR: You wanted to skip %d, but after filtering there were only %d items left.",
+                                offset * limit, totalFilteredTask));
+            }
+            if (limit != 0) {
+                taskStream = taskStream.skip(offset * limit).limit(limit);
+            }
+            Object tasksObject = comments ? taskStream
+                    .map(task -> Map.of("task", task, "comments", commentService.findAllByTaskId(task.getId())))
+                    .collect(Collectors.toList()) : taskStream.toList();
+            return Map.of("tasks", tasksObject, "total", totalFilteredTask);
         } catch (Exception e) {
             if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
                 error = e.getMessage();

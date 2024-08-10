@@ -43,4 +43,16 @@ public class TaskController {
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
         }
     }
+
+    @GetMapping("/tasks")
+    public ResponseEntity<Map<String, Object>> getTasks(@RequestHeader Map<String, String> head,
+                                                        @RequestParam Map<String, String> queryParameters) {
+        queryParameters.put("requester", jwtService.getSubject(head.get("authorization").substring("Bearer ".length())));
+        Map<String, Object> result = taskService.getTasks(queryParameters);
+        if (result.containsKey("tasks")) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
+    }
 }
