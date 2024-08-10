@@ -93,4 +93,17 @@ public class TaskController {
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
         }
     }
+
+    @PutMapping("/tasks/{taskId}/comment")
+    public ResponseEntity<Map<String, Object>> addComment(@PathVariable(name = "taskId") Long taskId,
+                                                          @RequestHeader Map<String, String> head,
+                                                          @RequestBody Map<String, String> body) {
+        body.put("author", jwtService.getSubject(head.get("authorization").substring("Bearer ".length())));
+        Map<String, Object> result = taskService.addComment(taskId, body);
+        if (result.containsKey("comment")) {
+            return new ResponseEntity<>(result, HttpStatus.CREATED);
+        } else {
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
+    }
 }

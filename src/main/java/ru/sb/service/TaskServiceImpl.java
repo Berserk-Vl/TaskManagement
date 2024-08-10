@@ -184,6 +184,26 @@ public class TaskServiceImpl implements TaskService {
         return Map.of("message", error);
     }
 
+    @Override
+    public Map<String, Object> addComment(Long taskId, Map<String, String> fields) {
+        String error;
+        try {
+            if (fields.containsKey("text")) {
+                getTask(taskId);
+                return commentService.addComment(taskId, fields.get("author"), fields.get("text"));
+            } else {
+                error = "ERROR: Field(text) not found.";
+            }
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
+                error = e.getMessage();
+            } else {
+                error = e.getClass().toString();
+            }
+        }
+        return Map.of("message", error);
+    }
+
     private Task getTask(Long taskId) throws NoSuchElementException {
         if (taskRepository.findById(taskId).isPresent()) {
             return taskRepository.findById(taskId).get();

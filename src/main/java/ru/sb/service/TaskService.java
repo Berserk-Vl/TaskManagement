@@ -14,4 +14,6 @@ public interface TaskService {
     Map<String, Object> setTaskStatus(Long taskId, Map<String, String> fields);
 
     Map<String, Object> setTaskPerformer(Long taskId, Map<String, String> fields);
+
+    Map<String, Object> addComment(Long taskId, Map<String, String> fields);
 }
