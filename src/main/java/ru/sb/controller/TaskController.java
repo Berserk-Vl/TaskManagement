@@ -21,89 +21,106 @@ public class TaskController {
     }
 
     @PutMapping("/tasks")
-    public ResponseEntity<Map<String, Object>> addTask(@RequestHeader Map<String, String> head, @RequestBody Map<String, String> body) {
-        body.put("author", jwtService.getSubject(head.get("authorization").substring("Bearer ".length())));
-        Map<String, Object> result = taskService.addTask(body);
-        if (result.containsKey("task")) {
-            return new ResponseEntity<>(result, HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<Map<String, Object>> addTask(@RequestHeader Map<String, String> head,
+                                                       @RequestBody Map<String, String> body) {
+        return getResponse("addTask", -1L, head, body, null, HttpStatus.CREATED);
     }
 
     @PutMapping("/tasks/{taskId}")
     public ResponseEntity<Map<String, Object>> updateTask(@PathVariable(name = "taskId") Long taskId,
                                                           @RequestHeader Map<String, String> head,
                                                           @RequestBody Map<String, String> body) {
-        body.put("author", jwtService.getSubject(head.get("authorization").substring("Bearer ".length())));
-        Map<String, Object> result = taskService.updateTask(taskId, body);
-        if (result.containsKey("task")) {
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
-        }
+        return getResponse("updateTask", taskId, head, body, null, HttpStatus.OK);
     }
 
     @GetMapping("/tasks")
     public ResponseEntity<Map<String, Object>> getTasks(@RequestHeader Map<String, String> head,
                                                         @RequestParam Map<String, String> queryParameters) {
-        queryParameters.put("requester", jwtService.getSubject(head.get("authorization").substring("Bearer ".length())));
-        Map<String, Object> result = taskService.getTasks(queryParameters);
-        if (result.containsKey("tasks")) {
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
-        }
+        return getResponse("getTasks", -1L, head, null, queryParameters, HttpStatus.OK);
     }
 
     @DeleteMapping("/tasks/{taskId}")
     public ResponseEntity<Map<String, Object>> deleteTask(@PathVariable(name = "taskId") Long taskId,
                                                           @RequestHeader Map<String, String> head) {
-        Map<String, Object> result = taskService.deleteTask(taskId,
-                jwtService.getSubject(head.get("authorization").substring("Bearer ".length())));
-        if (result.containsKey("task")) {
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
-        }
+        return getResponse("deleteTask", taskId, head, null, null, HttpStatus.OK);
     }
 
     @PutMapping("/tasks/{taskId}/status")
     public ResponseEntity<Map<String, Object>> setTaskStatus(@PathVariable(name = "taskId") Long taskId,
                                                              @RequestHeader Map<String, String> head,
                                                              @RequestBody Map<String, String> body) {
-        body.put("requester", jwtService.getSubject(head.get("authorization").substring("Bearer ".length())));
-        Map<String, Object> result = taskService.setTaskStatus(taskId, body);
-        if (result.containsKey("task")) {
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
-        }
+        return getResponse("setTaskStatus", taskId, head, body, null, HttpStatus.OK);
     }
 
     @PutMapping("/tasks/{taskId}/performer")
     public ResponseEntity<Map<String, Object>> setTaskPerformer(@PathVariable(name = "taskId") Long taskId,
                                                                 @RequestHeader Map<String, String> head,
                                                                 @RequestBody Map<String, String> body) {
-        body.put("author", jwtService.getSubject(head.get("authorization").substring("Bearer ".length())));
-        Map<String, Object> result = taskService.setTaskPerformer(taskId, body);
-        if (result.containsKey("task")) {
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
-        }
+        return getResponse("setTaskPerformer", taskId, head, body, null, HttpStatus.OK);
     }
 
     @PutMapping("/tasks/{taskId}/comment")
     public ResponseEntity<Map<String, Object>> addComment(@PathVariable(name = "taskId") Long taskId,
                                                           @RequestHeader Map<String, String> head,
                                                           @RequestBody Map<String, String> body) {
-        body.put("author", jwtService.getSubject(head.get("authorization").substring("Bearer ".length())));
-        Map<String, Object> result = taskService.addComment(taskId, body);
-        if (result.containsKey("comment")) {
-            return new ResponseEntity<>(result, HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        return getResponse("addComment", taskId, head, body, null, HttpStatus.CREATED);
+    }
+
+    private ResponseEntity<Map<String, Object>> getResponse(String request, Long taskId, Map<String, String> head,
+                                                            Map<String, String> body, Map<String, String> queryParameters,
+                                                            HttpStatus successCode) {
+        try {
+            Map<String, Object> result;
+            String email = jwtService.getSubject(head.get("authorization").substring("Bearer ".length()));
+            switch (request) {
+                case "addTask" -> {
+                    body.put("author", email);
+                    result = taskService.addTask(body);
+                }
+                case "updateTask" -> {
+                    body.put("author", email);
+                    result = taskService.updateTask(taskId, body);
+                }
+                case "getTasks" -> {
+                    queryParameters.put("requester", email);
+                    result = taskService.getTasks(queryParameters);
+                }
+                case "deleteTask" -> result = taskService.deleteTask(taskId, email);
+                case "setTaskStatus" -> {
+                    body.put("requester", email);
+                    result = taskService.setTaskStatus(taskId, body);
+                }
+                case "setTaskPerformer" -> {
+                    body.put("author", email);
+                    result = taskService.setTaskPerformer(taskId, body);
+                }
+                case "addComment" -> {
+                    body.put("author", email);
+                    result = taskService.addComment(taskId, body);
+                }
+                default -> result = Map.of();
+            }
+            return new ResponseEntity<>(result, successCode);
+        } catch (Exception e) {
+            HttpStatus errorHttpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            String errorMessage;
+            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
+                errorMessage = e.getMessage();
+                try {
+                    String prefix = "ERROR[";
+                    HttpStatus parsedCode = HttpStatus.resolve(
+                            Integer.parseInt(e.getMessage().substring(prefix.length(), prefix.length() + 3)));
+                    if (parsedCode != null) {
+                        errorHttpStatus = parsedCode;
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            } else {
+                errorMessage = e.getClass().toString();
+            }
+            return new ResponseEntity<>(Map.of("error message", errorMessage), errorHttpStatus);
         }
+
     }
 }
