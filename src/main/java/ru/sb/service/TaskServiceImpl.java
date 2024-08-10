@@ -166,6 +166,24 @@ public class TaskServiceImpl implements TaskService {
         return Map.of("message", error);
     }
 
+    @Override
+    public Map<String, Object> setTaskPerformer(Long taskId, Map<String, String> fields) {
+        String error;
+        try {
+            Task task = getTask(taskId);
+            isAuthor(task, fields);
+            setTextField(task, fields, "performer", MAX_EMAIL_LENGTH, true, true);
+            return Map.of("task", taskRepository.save(task));
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
+                error = e.getMessage();
+            } else {
+                error = e.getClass().toString();
+            }
+        }
+        return Map.of("message", error);
+    }
+
     private Task getTask(Long taskId) throws NoSuchElementException {
         if (taskRepository.findById(taskId).isPresent()) {
             return taskRepository.findById(taskId).get();

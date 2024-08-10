@@ -12,4 +12,6 @@ public interface TaskService {
     Map<String, Object> deleteTask(Long taskId, String requester);
 
     Map<String, Object> setTaskStatus(Long taskId, Map<String, String> fields);
+
+    Map<String, Object> setTaskPerformer(Long taskId, Map<String, String> fields);
 }

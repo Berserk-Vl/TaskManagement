@@ -80,4 +80,17 @@ public class TaskController {
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
         }
     }
+
+    @PutMapping("/tasks/{taskId}/performer")
+    public ResponseEntity<Map<String, Object>> setTaskPerformer(@PathVariable(name = "taskId") Long taskId,
+                                                                @RequestHeader Map<String, String> head,
+                                                                @RequestBody Map<String, String> body) {
+        body.put("author", jwtService.getSubject(head.get("authorization").substring("Bearer ".length())));
+        Map<String, Object> result = taskService.setTaskPerformer(taskId, body);
+        if (result.containsKey("task")) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
+    }
 }
