@@ -29,179 +29,107 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public Map<String, Object> addTask(Map<String, String> fields) {
-        String error;
-        try {
-            Task task = new Task();
-            setTextField(task, fields, "author", MAX_EMAIL_LENGTH, false, true);
-            setTextField(task, fields, "title", MAX_TITLE_LENGTH, false, true);
-            setTextField(task, fields, "description", MAX_DESCRIPTION_LENGTH, false, true);
-            setEnumField(task, fields, "status", Task.Status.values(), false, false);
-            setEnumField(task, fields, "priority", Task.Priority.values(), false, false);
-            setTextField(task, fields, "performer", MAX_EMAIL_LENGTH, true, false);
-            return Map.of("task", taskRepository.save(task));
-        } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
-                error = e.getMessage();
-            } else {
-                error = e.getClass().toString();
-            }
-        }
-        return Map.of("message", error);
+        Task task = new Task();
+        setTextField(task, fields, "author", MAX_EMAIL_LENGTH, false, true);
+        setTextField(task, fields, "title", MAX_TITLE_LENGTH, false, true);
+        setTextField(task, fields, "description", MAX_DESCRIPTION_LENGTH, false, true);
+        setEnumField(task, fields, "status", Task.Status.values(), false, false);
+        setEnumField(task, fields, "priority", Task.Priority.values(), false, false);
+        setTextField(task, fields, "performer", MAX_EMAIL_LENGTH, true, false);
+        return Map.of("task", taskRepository.save(task));
     }
 
     @Override
     public Map<String, Object> updateTask(Long taskId, Map<String, String> fields) {
-        String error;
-        try {
-            Task task = getTask(taskId);
-            isAuthor(task, fields);
-            setTextField(task, fields, "title", MAX_TITLE_LENGTH, false, false);
-            setTextField(task, fields, "description", MAX_DESCRIPTION_LENGTH, false, false);
-            setEnumField(task, fields, "status", Task.Status.values(), false, false);
-            setEnumField(task, fields, "priority", Task.Priority.values(), false, false);
-            setTextField(task, fields, "performer", MAX_EMAIL_LENGTH, true, false);
-            return Map.of("task", taskRepository.save(task));
-        } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
-                error = e.getMessage();
-            } else {
-                error = e.getClass().toString();
-            }
-        }
-        return Map.of("message", error);
+        Task task = getTask(taskId);
+        isAuthor(task, fields);
+        setTextField(task, fields, "title", MAX_TITLE_LENGTH, false, false);
+        setTextField(task, fields, "description", MAX_DESCRIPTION_LENGTH, false, false);
+        setEnumField(task, fields, "status", Task.Status.values(), false, false);
+        setEnumField(task, fields, "priority", Task.Priority.values(), false, false);
+        setTextField(task, fields, "performer", MAX_EMAIL_LENGTH, true, false);
+        return Map.of("task", taskRepository.save(task));
     }
 
     @Override
     public Map<String, Object> getTasks(Map<String, String> filters) {
-        String error;
-        try {
-            String author = getStringFilterValue(filters, "author");
-            String performer = getStringFilterValue(filters, "performer");
-            long offset = getLongFilterValue(filters, "offset");
-            long limit = getLongFilterValue(filters, "limit");
-            if (offset > 0 && limit == 0) {
-                throw new IllegalArgumentException("ERROR[400]: For an offset value > 0 need to provide a limit value > 0.");
-            }
-            boolean comments = getBooleanFilterValue(filters, "comments");
-            Stream<Task> taskStream = taskRepository.findAll().stream();
-            if (author != null && !author.equals("")) {
-                taskStream = taskStream.filter(task -> task.getAuthor().equals(author));
-            } else if (author == null) {
-                throw new IllegalArgumentException("ERROR[400]: Filter(author) can't be null.");
-            }
-            if (!"".equals(performer)) {
-                taskStream = taskStream.filter(task -> {
-                    if (task.getPerformer() == null) {
-                        return task.getPerformer() == null && performer == null;
-                    }
-                    return task.getPerformer().equals(performer);
-                });
-            }
-            List<Task> taskList = taskStream.toList();
-            long totalFilteredTask = taskList.size();
-            taskStream = taskList.stream();
-            if (offset * limit >= totalFilteredTask) {
-                throw new IllegalArgumentException(
-                        String.format("ERROR[400]: You wanted to skip %d, but after filtering there were only %d items left.",
-                                offset * limit, totalFilteredTask));
-            }
-            if (limit != 0) {
-                taskStream = taskStream.skip(offset * limit).limit(limit);
-            }
-            Object tasksObject = comments ? taskStream
-                    .map(task -> Map.of("task", task, "comments", commentService.findAllByTaskId(task.getId())))
-                    .collect(Collectors.toList()) : taskStream.toList();
-            return Map.of("tasks", tasksObject, "total", totalFilteredTask);
-        } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
-                error = e.getMessage();
-            } else {
-                error = e.getClass().toString();
-            }
+        String author = getStringFilterValue(filters, "author");
+        String performer = getStringFilterValue(filters, "performer");
+        long offset = getLongFilterValue(filters, "offset");
+        long limit = getLongFilterValue(filters, "limit");
+        if (offset > 0 && limit == 0) {
+            throw new IllegalArgumentException("ERROR[400]: For an offset value > 0 need to provide a limit value > 0.");
         }
-        return Map.of("message", error);
+        boolean comments = getBooleanFilterValue(filters, "comments");
+        Stream<Task> taskStream = taskRepository.findAll().stream();
+        if (author != null && !author.equals("")) {
+            taskStream = taskStream.filter(task -> task.getAuthor().equals(author));
+        } else if (author == null) {
+            throw new IllegalArgumentException("ERROR[400]: Filter(author) can't be null.");
+        }
+        if (!"".equals(performer)) {
+            taskStream = taskStream.filter(task -> {
+                if (task.getPerformer() == null) {
+                    return task.getPerformer() == null && performer == null;
+                }
+                return task.getPerformer().equals(performer);
+            });
+        }
+        List<Task> taskList = taskStream.toList();
+        long totalFilteredTask = taskList.size();
+        taskStream = taskList.stream();
+        if (offset * limit >= totalFilteredTask) {
+            throw new IllegalArgumentException(
+                    String.format("ERROR[400]: You wanted to skip %d, but after filtering there were only %d items left.",
+                            offset * limit, totalFilteredTask));
+        }
+        if (limit != 0) {
+            taskStream = taskStream.skip(offset * limit).limit(limit);
+        }
+        Object tasksObject = comments ? taskStream
+                .map(task -> Map.of("task", task, "comments", commentService.findAllByTaskId(task.getId())))
+                .collect(Collectors.toList()) : taskStream.toList();
+        return Map.of("tasks", tasksObject, "total", totalFilteredTask);
     }
 
     @Override
     public Map<String, Object> deleteTask(Long taskId, String requester) {
-        String error;
-        try {
-            Task task = getTask(taskId);
-            isAuthor(task, Map.of("author", requester));
-            taskRepository.deleteById(taskId);
-            return Map.of("task", task);
-        } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
-                error = e.getMessage();
-            } else {
-                error = e.getClass().toString();
-            }
-        }
-        return Map.of("message", error);
+        Task task = getTask(taskId);
+        isAuthor(task, Map.of("author", requester));
+        taskRepository.deleteById(taskId);
+        return Map.of("task", task);
     }
 
     @Override
     public Map<String, Object> setTaskStatus(Long taskId, Map<String, String> fields) {
-        String error;
-        try {
-            Task task = getTask(taskId);
-            if (fields.containsKey("requester") && fields.get("requester") != null) {
-                if (task.getAuthor().equals(fields.get("requester"))
-                        || fields.get("requester").equals(task.getPerformer())) {
-                    setEnumField(task, fields, "status", Task.Status.values(), false, true);
-                    return Map.of("task", taskRepository.save(task));
-                } else {
-                    error = String.format("ERROR[403]: You are not an author or a performer of the task(%d).", taskId);
-                }
-            } else {
-                error = "ERROR[403]: Can't identify requester.";
+        Task task = getTask(taskId);
+        if (fields.containsKey("requester") && fields.get("requester") != null) {
+            if (task.getAuthor().equals(fields.get("requester"))
+                    || fields.get("requester").equals(task.getPerformer())) {
+                setEnumField(task, fields, "status", Task.Status.values(), false, true);
+                return Map.of("task", taskRepository.save(task));
             }
-        } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
-                error = e.getMessage();
-            } else {
-                error = e.getClass().toString();
-            }
+            throw new IllegalArgumentException(
+                    String.format("ERROR[403]: You are not an author or a performer of the task(%d).", taskId));
         }
-        return Map.of("message", error);
+        throw new NullPointerException("ERROR[403]: Can't identify requester.");
     }
 
     @Override
     public Map<String, Object> setTaskPerformer(Long taskId, Map<String, String> fields) {
-        String error;
-        try {
-            Task task = getTask(taskId);
-            isAuthor(task, fields);
-            setTextField(task, fields, "performer", MAX_EMAIL_LENGTH, true, true);
-            return Map.of("task", taskRepository.save(task));
-        } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
-                error = e.getMessage();
-            } else {
-                error = e.getClass().toString();
-            }
-        }
-        return Map.of("message", error);
+        Task task = getTask(taskId);
+        isAuthor(task, fields);
+        setTextField(task, fields, "performer", MAX_EMAIL_LENGTH, true, true);
+        return Map.of("task", taskRepository.save(task));
     }
 
     @Override
     public Map<String, Object> addComment(Long taskId, Map<String, String> fields) {
-        String error;
-        try {
-            if (fields.containsKey("text")) {
-                getTask(taskId);
-                return commentService.addComment(taskId, fields.get("author"), fields.get("text"));
-            } else {
-                error = "ERROR[400]: Field(text) not found.";
-            }
-        } catch (Exception e) {
-            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
-                error = e.getMessage();
-            } else {
-                error = e.getClass().toString();
-            }
+        if (fields.containsKey("text")) {
+            getTask(taskId);
+            return commentService.addComment(taskId, fields.get("author"), fields.get("text"));
         }
-        return Map.of("message", error);
+        throw new NullPointerException("ERROR[400]: Field(text) not found.");
     }
 
     private Task getTask(Long taskId) throws NoSuchElementException {
@@ -228,7 +156,7 @@ public class TaskServiceImpl implements TaskService {
                         case "description" -> task.setDescription(fields.get(fieldName));
                         case "author" -> task.setAuthor(fields.get(fieldName));
                         case "performer" -> {
-                            if (userService.findUserByEmail(fields.get("performer")) != null) {
+                            if (userService.findUserByEmail(fields.get(fieldName)) != null) {
                                 task.setPerformer(fields.get(fieldName));
                             } else {
                                 throw new IllegalArgumentException(
@@ -286,9 +214,8 @@ public class TaskServiceImpl implements TaskService {
                     throw new IllegalArgumentException(
                             String.format("ERROR[400]: Can't identify the filter(%s) value.", filterName));
                 }
-            } else {
-                return filters.get(filterName);
             }
+            return filters.get(filterName);
         }
         return "";
     }
