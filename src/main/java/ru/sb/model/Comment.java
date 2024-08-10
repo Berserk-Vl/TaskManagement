@@ -2,6 +2,8 @@ package ru.sb.model;
 
 import jakarta.persistence.*;
 
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "comments")
@@ -28,7 +30,7 @@ public class Comment {
     }
 
     public Comment(Long taskId, String author, String text) {
-        this(null, taskId, author, text, null);
+        this(null, taskId, author, text, ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
     }
 
     public Long getId() {
