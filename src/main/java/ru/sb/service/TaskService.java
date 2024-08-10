@@ -10,4 +10,6 @@ public interface TaskService {
     Map<String, Object> getTasks(Map<String, String> filters);
 
     Map<String, Object> deleteTask(Long taskId, String requester);
+
+    Map<String, Object> setTaskStatus(Long taskId, Map<String, String> fields);
 }

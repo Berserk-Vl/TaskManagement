@@ -140,6 +140,32 @@ public class TaskServiceImpl implements TaskService {
         return Map.of("message", error);
     }
 
+    @Override
+    public Map<String, Object> setTaskStatus(Long taskId, Map<String, String> fields) {
+        String error;
+        try {
+            Task task = getTask(taskId);
+            if (fields.containsKey("requester") && fields.get("requester") != null) {
+                if (task.getAuthor().equals(fields.get("requester"))
+                        || fields.get("requester").equals(task.getPerformer())) {
+                    setEnumField(task, fields, "status", Task.Status.values(), false, true);
+                    return Map.of("task", taskRepository.save(task));
+                } else {
+                    error = String.format("ERROR: You are not an author or a performer of the task(%d).", taskId);
+                }
+            } else {
+                error = "ERROR: Can't identify requester.";
+            }
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
+                error = e.getMessage();
+            } else {
+                error = e.getClass().toString();
+            }
+        }
+        return Map.of("message", error);
+    }
+
     private Task getTask(Long taskId) throws NoSuchElementException {
         if (taskRepository.findById(taskId).isPresent()) {
             return taskRepository.findById(taskId).get();
