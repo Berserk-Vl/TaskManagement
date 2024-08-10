@@ -55,6 +55,8 @@ public class TaskServiceImpl implements TaskService {
     public Map<String, Object> getTasks(Map<String, String> filters) {
         String author = getStringFilterValue(filters, "author");
         String performer = getStringFilterValue(filters, "performer");
+        Task.Status status = (Task.Status) getEnumFilterValue(filters, "status");
+        Task.Priority priority = (Task.Priority) getEnumFilterValue(filters, "priority");
         long offset = getLongFilterValue(filters, "offset");
         long limit = getLongFilterValue(filters, "limit");
         if (offset > 0 && limit == 0) {
@@ -74,6 +76,12 @@ public class TaskServiceImpl implements TaskService {
                 }
                 return task.getPerformer().equals(performer);
             });
+        }
+        if (status != null) {
+            taskStream = taskStream.filter(task -> task.getStatus() == status);
+        }
+        if (priority != null) {
+            taskStream = taskStream.filter(task -> task.getPriority() == priority);
         }
         List<Task> taskList = taskStream.toList();
         long totalFilteredTask = taskList.size();
@@ -247,5 +255,33 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException(String.format("ERROR[400]: Filter(%s) is not Boolean type.", filterName));
         }
         return false;
+    }
+
+    private Object getEnumFilterValue(Map<String, String> filters, String filterName)
+            throws IllegalArgumentException {
+        if (filters.containsKey(filterName)) {
+            try {
+                switch (filterName) {
+                    case "status" -> {
+                        return Task.Status.valueOf(filters.get(filterName).toUpperCase());
+                    }
+                    case "priority" -> {
+                        return Task.Priority.valueOf(filters.get(filterName).toUpperCase());
+                    }
+                    default -> throw new IllegalArgumentException(String.format("ERROR[500]: Filter(%s) is unknown.",
+                            filterName));
+                }
+            } catch (IllegalArgumentException e) {
+                String expectedValues;
+                switch (filterName) {
+                    case "status" -> expectedValues = Arrays.toString(Task.Status.values());
+                    case "priority" -> expectedValues = Arrays.toString(Task.Priority.values());
+                    default -> expectedValues = "[]";
+                }
+                throw new IllegalArgumentException(String.format("ERROR[400]: Filter(%s) is not one of the expected value %s.",
+                        filterName, expectedValues));
+            }
+        }
+        return null;
     }
 }
