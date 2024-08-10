@@ -122,6 +122,24 @@ public class TaskServiceImpl implements TaskService {
         return Map.of("message", error);
     }
 
+    @Override
+    public Map<String, Object> deleteTask(Long taskId, String requester) {
+        String error;
+        try {
+            Task task = getTask(taskId);
+            isAuthor(task, Map.of("author", requester));
+            taskRepository.deleteById(taskId);
+            return Map.of("task", task);
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().startsWith("ERROR")) {
+                error = e.getMessage();
+            } else {
+                error = e.getClass().toString();
+            }
+        }
+        return Map.of("message", error);
+    }
+
     private Task getTask(Long taskId) throws NoSuchElementException {
         if (taskRepository.findById(taskId).isPresent()) {
             return taskRepository.findById(taskId).get();

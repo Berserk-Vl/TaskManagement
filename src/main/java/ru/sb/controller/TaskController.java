@@ -55,4 +55,16 @@ public class TaskController {
             return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
         }
     }
+
+    @DeleteMapping("/tasks/{taskId}")
+    public ResponseEntity<Map<String, Object>> deleteTask(@PathVariable(name = "taskId") Long taskId,
+                                                          @RequestHeader Map<String, String> head) {
+        Map<String, Object> result = taskService.deleteTask(taskId,
+                jwtService.getSubject(head.get("authorization").substring("Bearer ".length())));
+        if (result.containsKey("task")) {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
+    }
 }
