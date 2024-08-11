@@ -20,7 +20,7 @@ public class TaskController {
         this.taskService = taskService;
     }
 
-    @PutMapping("/tasks")
+    @PostMapping("/tasks")
     public ResponseEntity<Map<String, Object>> addTask(@RequestHeader Map<String, String> head,
                                                        @RequestBody Map<String, String> body) {
         return getResponse("addTask", -1L, head, body, null, HttpStatus.CREATED);
