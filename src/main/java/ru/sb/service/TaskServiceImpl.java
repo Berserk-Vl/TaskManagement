@@ -72,7 +72,7 @@ public class TaskServiceImpl implements TaskService {
         if (!"".equals(performer)) {
             taskStream = taskStream.filter(task -> {
                 if (task.getPerformer() == null) {
-                    return task.getPerformer() == null && performer == null;
+                    return performer == null;
                 }
                 return task.getPerformer().equals(performer);
             });
