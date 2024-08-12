@@ -1,14 +1,22 @@
 package ru.sb.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.StringToClassMapItem;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import ru.sb.config.openapi.OpenAPIConfig;
 import ru.sb.service.UserService;
 
 import java.util.Map;
 
+@Tag(name = "users")
 @RestController
 public class UserController {
 
@@ -18,6 +26,52 @@ public class UserController {
         this.userService = userService;
     }
 
+    @Operation(
+            summary = "User login.",
+            description = "Login with email and password, if authentication is successful, JWT is returned.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "User credentials.",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = OpenAPIConfig.UserSchema.class)
+                    )
+            ),
+            responses = {
+                    @ApiResponse(
+                            description = "Successful authentication.",
+                            responseCode = "200",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(
+                                            type = "object",
+                                            properties = {
+                                                    @StringToClassMapItem(key = "token", value = String.class)
+                                            }
+                                    )
+                            )),
+                    @ApiResponse(
+                            description = "The Email and Password fields are required and cannot be null.",
+                            responseCode = "400",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = OpenAPIConfig.ErrorSchema.class)
+                            )),
+                    @ApiResponse(
+                            description = "Authentication failed.",
+                            responseCode = "403",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = OpenAPIConfig.ErrorSchema.class)
+                            )),
+                    @ApiResponse(
+                            description = "Unpredicted error.",
+                            responseCode = "500",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = OpenAPIConfig.ErrorSchema.class)
+                            )),
+            }
+    )
     @PostMapping("/user/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody Map<String, String> body) {
         return getResponse("login", null, body, null, HttpStatus.OK);

@@ -32,6 +32,7 @@ public class WebSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/user/login").permitAll();
+                    auth.requestMatchers("/openapi/**").permitAll();
                     auth.requestMatchers("/tasks/**").authenticated();
                 })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
