@@ -223,7 +223,7 @@ public class TaskServiceImpl implements TaskService {
                             String.format("ERROR[400]: Can't identify the filter(%s) value.", filterName));
                 }
             }
-            return filters.get(filterName);
+            return filters.get(filterName).equalsIgnoreCase("null") ? null : filters.get(filterName);
         }
         return "";
     }
