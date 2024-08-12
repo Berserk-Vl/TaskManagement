@@ -86,7 +86,7 @@ public class TaskServiceImpl implements TaskService {
         List<Task> taskList = taskStream.toList();
         long totalFilteredTask = taskList.size();
         taskStream = taskList.stream();
-        if (offset * limit >= totalFilteredTask) {
+        if (offset * limit >= totalFilteredTask && offset * limit > 0) {
             throw new IllegalArgumentException(
                     String.format("ERROR[400]: You wanted to skip %d, but after filtering there were only %d items left.",
                             offset * limit, totalFilteredTask));
