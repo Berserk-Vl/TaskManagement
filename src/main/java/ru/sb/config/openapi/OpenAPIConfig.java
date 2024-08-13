@@ -55,6 +55,10 @@ public class OpenAPIConfig {
         public String performer;
     }
 
+    public static class TokenSchema{
+        public String token;
+    }
+
     public static class TaskUpdateSchema {
         @Schema(maxLength = 50)
         public String title;

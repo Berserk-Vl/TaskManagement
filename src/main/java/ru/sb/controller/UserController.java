@@ -42,12 +42,7 @@ public class UserController {
                             responseCode = "200",
                             content = @Content(
                                     mediaType = "application/json",
-                                    schema = @Schema(
-                                            type = "object",
-                                            properties = {
-                                                    @StringToClassMapItem(key = "token", value = String.class)
-                                            }
-                                    )
+                                    schema = @Schema(implementation = OpenAPIConfig.TokenSchema.class)
                             )),
                     @ApiResponse(
                             description = "The Email and Password fields are required and cannot be null.",

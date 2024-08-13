@@ -136,12 +136,12 @@ public class TaskController {
                     @Parameter(
                             name = "author",
                             description = "Author of a task(ME as shortcut for your email).",
-                            schema = @Schema(type = "string")
+                            schema = @Schema(implementation = String.class)
                     ),
                     @Parameter(
                             name = "performer",
                             description = "Performer  of a task(ME as shortcut for your email).",
-                            schema = @Schema(type = "string")
+                            schema = @Schema(implementation = String.class)
                     ),
                     @Parameter(
                             name = "status",
@@ -161,12 +161,12 @@ public class TaskController {
                     @Parameter(
                             name = "offset",
                             description = "Number of pages to skip.",
-                            schema = @Schema(type = "integer32", minimum = "0")
+                            schema = @Schema(implementation = Long.class, minimum = "0")
                     ),
                     @Parameter(
                             name = "limit",
                             description = "Tasks per page.",
-                            schema = @Schema(type = "integer32", minimum = "0")
+                            schema = @Schema(implementation = Long.class, minimum = "0")
                     ),},
             responses = {
                     @ApiResponse(
