@@ -59,10 +59,10 @@ public class TaskServiceImpl implements TaskService {
         Task.Priority priority = (Task.Priority) getEnumFilterValue(filters, "priority");
         long offset = getLongFilterValue(filters, "offset");
         long limit = getLongFilterValue(filters, "limit");
+        boolean comments = getBooleanFilterValue(filters, "comments");
         if (offset > 0 && limit == 0) {
             throw new IllegalArgumentException("ERROR[400]: For an offset value > 0 need to provide a limit value > 0.");
         }
-        boolean comments = getBooleanFilterValue(filters, "comments");
         Stream<Task> taskStream = taskRepository.findAll().stream();
         if (author != null && !author.equals("")) {
             taskStream = taskStream.filter(task -> task.getAuthor().equals(author));
