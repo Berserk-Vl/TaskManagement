@@ -463,6 +463,7 @@ public class TaskController {
                 }
             } else {
                 errorMessage = String.format("ERROR[%d]: %s.", errorHttpStatus.value(), e.getClass().toString());
+                e.printStackTrace();
             }
             return new ResponseEntity<>(Map.of("error message", errorMessage), errorHttpStatus);
         }
