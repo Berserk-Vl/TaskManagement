@@ -410,7 +410,13 @@ public class TaskController {
                                                             HttpStatus successCode) {
         try {
             Map<String, Object> result;
-            String email = jwtService.getSubject(head.get("authorization").substring("Bearer ".length()));
+            String jwt = "";
+            for (Map.Entry<String, String> entry : head.entrySet()) {
+                if (entry.getKey().equalsIgnoreCase("Authorization")) {
+                    jwt = entry.getValue().substring("Bearer ".length());
+                }
+            }
+            String email = jwtService.getSubject(jwt);
             switch (request) {
                 case "addTask" -> {
                     body.put("author", email);
